@@ -61,7 +61,7 @@ public class Processor extends AbstractProcessor {
                 String typeName = entry.getKey().split("_")[1];
                 ClassName className = ClassName.get(packageName, typeName);
                 ClassName generatedClassName = ClassName
-                        .get(packageName, NameStore.getGeneratedClassName(typeName));
+                        .get(packageName, typeName+"$Binding");
 
                 /*
                 创建要生成的类，如下所示
@@ -79,23 +79,23 @@ public class Processor extends AbstractProcessor {
                 */
                 classBuilder.addMethod(MethodSpec.constructorBuilder()
                         .addModifiers(Modifier.PUBLIC)
-                        .addParameter(className, NameStore.Variable.ANDROID_ACTIVITY)
+                        .addParameter(className, “activity”)
                         .addStatement("$N($N)",
-                                NameStore.Method.BIND_VIEWS,
-                                NameStore.Variable.ANDROID_ACTIVITY)
+                                “bindViews”,
+                                “activity”)
                         .addStatement("$N($N)",
-                                NameStore.Method.BIND_ON_CLICKS,
-                                NameStore.Variable.ANDROID_ACTIVITY)
+                                bindOnClicks,
+                                “activity”)
                         .build());
 
                 /*创建方法bindViews(MainActivity activity)
                  * private void bindViews(MainActivity activity) {}
                  */
                 MethodSpec.Builder bindViewsMethodBuilder = MethodSpec
-                        .methodBuilder(NameStore.Method.BIND_VIEWS)
+                        .methodBuilder(“bindViews”)
                         .addModifiers(Modifier.PRIVATE)
                         .returns(void.class)
-                        .addParameter(className, NameStore.Variable.ANDROID_ACTIVITY);
+                        .addParameter(className, “activity”);
 
                 /*增加方法体
                  * activity.tvHello = (TextView)activity.findViewById(2131165326);
@@ -104,10 +104,10 @@ public class Processor extends AbstractProcessor {
                     BindView bindView = variableElement.getAnnotation(BindView.class);
                     if (bindView != null) {
                         bindViewsMethodBuilder.addStatement("$N.$N = ($T)$N.findViewById($L)",
-                                NameStore.Variable.ANDROID_ACTIVITY,
+                                “activity”,
                                 variableElement.getSimpleName(),
                                 variableElement,
-                                NameStore.Variable.ANDROID_ACTIVITY,
+                                “activity”,
                                 bindView.value());
                     }
                 }
@@ -124,37 +124,37 @@ public class Processor extends AbstractProcessor {
                   }
                  */
                 ClassName androidOnClickListenerClassName = ClassName.get(
-                        NameStore.Package.ANDROID_VIEW,
-                        NameStore.Class.ANDROID_VIEW,
-                        NameStore.Class.ANDROID_VIEW_ON_CLICK_LISTENER);
+                        "android.view",
+                        "View",
+                        "OnClickListener");
 
                 ClassName androidViewClassName = ClassName.get(
-                        NameStore.Package.ANDROID_VIEW,
-                        NameStore.Class.ANDROID_VIEW);
+                        "android.view",
+                        "View");
 
                 MethodSpec.Builder bindOnClicksMethodBuilder = MethodSpec
-                        .methodBuilder(NameStore.Method.BIND_ON_CLICKS)
+                        .methodBuilder(bindOnClicks)
                         .addModifiers(Modifier.PRIVATE)
                         .returns(void.class)
-                        .addParameter(className, NameStore.Variable.ANDROID_ACTIVITY, Modifier.FINAL);
+                        .addParameter(className, “activity”, Modifier.FINAL);
 
                 for (ExecutableElement executableElement : ElementFilter.methodsIn(entry.getValue())) {
                     OnClick onClick = executableElement.getAnnotation(OnClick.class);
                     if (onClick != null) {
                         TypeSpec onClickListenerClass = TypeSpec.anonymousClassBuilder("")
                                 .addSuperinterface(androidOnClickListenerClassName)
-                                .addMethod(MethodSpec.methodBuilder(NameStore.Method.ANDROID_VIEW_ON_CLICK)
+                                .addMethod(MethodSpec.methodBuilder("onClick")
                                         .addModifiers(Modifier.PUBLIC)
-                                        .addParameter(androidViewClassName, NameStore.Variable.ANDROID_VIEW)
+                                        .addParameter(androidViewClassName, "view")
                                         .addStatement("$N.$N($N)",
-                                                NameStore.Variable.ANDROID_ACTIVITY,
+                                                “activity”,
                                                 executableElement.getSimpleName(),
-                                                NameStore.Variable.ANDROID_VIEW)
+                                                "view")
                                         .returns(void.class)
                                         .build())
                                 .build();
                         bindOnClicksMethodBuilder.addStatement("$N.findViewById($L).setOnClickListener($L)",
-                                NameStore.Variable.ANDROID_ACTIVITY,
+                                “activity”,
                                 onClick.value(),
                                 onClickListenerClass);
                     }
